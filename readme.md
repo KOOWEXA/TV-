@@ -1,7 +1,4 @@
-# 📺 TV_RM – Descubre contenido aleatorio de películas y series
-
-**TV_RM** es una aplicación web ligera y moderna que te ayuda a resolver la eterna pregunta:  
-> _«¿Qué veo hoy?»_
+# 📺 TV+
 
 Con un solo clic, obtén una **película estrenada este año** o una **serie en emisión o próximamente estrenada**, seleccionada al azar desde la base de datos de [The Movie Database (TMDb)](https://www.themoviedb.org/). Ideal para quienes buscan inspiración sin perder tiempo navegando.
 
