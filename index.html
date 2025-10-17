@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TV_RM</title>
-  <link rel="icon" href="https://www.themoviedb.org/assets/2/apple-touch-icon-cfba7699efe7a742de25c28e08c38525f19381d31087c69e89d6bcb8e3c0ddfa.png" />
+  <title>TV+</title>
+  <link rel="icon" href="TV.png" />
   <style>
     :root {
       --primary: #e50914;
@@ -31,6 +31,39 @@
       padding: 20px;
       margin: 0;
       min-height: 100vh;
+      position: relative;
+    }
+
+    .top-bar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .logo-small {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+    }
+
+    .follow-btn {
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .follow-btn:hover {
+      background: var(--primary-hover);
+      text-decoration: none;
     }
 
     h1 {
@@ -195,11 +228,23 @@
       .movie-title { font-size: 1.4em; }
       h1 { font-size: 1.5em; }
       .action-btn { padding: 10px 20px; font-size: 0.95em; }
+      .top-bar { top: 12px; left: 12px; }
+      .logo-small { width: 28px; height: 28px; }
     }
   </style>
 </head>
 <body>
-  <h1>🎬 TV Random</h1>
+  <div class="top-bar">
+    <img src="TV.png"
+         alt="Logo"
+         class="logo-small">
+    <a href="https://whatsapp.com/channel/0029Vb6sN8kL7UVSCeAQgA2f"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="follow-btn">Seguir</a>
+  </div>
+
+  <h1>TV+</h1>
 
   <div class="filters">
     <button class="filter-btn active" data-type="movie">Películas (este año)</button>
