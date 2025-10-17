@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TV_RM</title>
+  <link rel="icon" href="https://www.themoviedb.org/assets/2/apple-touch-icon-cfba7699efe7a742de25c28e08c38525f19381d31087c69e89d6bcb8e3c0ddfa.png" />
   <style>
     :root {
       --primary: #e50914;
@@ -12,13 +13,13 @@
       --card-bg: #1f1f1f;
       --text: #ffffff;
       --text-secondary: #b3b3b3;
+      --text-muted: #666;
       --radius: 12px;
       --shadow: 0 8px 24px rgba(0,0,0,0.5);
+      --success: #4ade80;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -38,6 +39,44 @@
       text-align: center;
     }
 
+    .filters {
+      display: flex;
+      gap: 12px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .filter-btn {
+      padding: 10px 20px;
+      font-size: 1em;
+      background: #333;
+      color: var(--text-secondary);
+      border: 1px solid #444;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .status-bar {
+      font-size: 0.85em;
+      color: var(--text-muted);
+      margin-top: 4px;
+      text-align: center;
+      min-height: 1.4em;
+    }
+
+    .countdown {
+      font-weight: bold;
+      color: var(--success);
+    }
+
     .movie-card {
       background: var(--card-bg);
       max-width: 600px;
@@ -46,7 +85,7 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       text-align: center;
-      margin-top: 20px;
+      margin-top: 16px;
       opacity: 0;
       transform: translateY(10px);
       transition: opacity 0.4s ease, transform 0.4s ease;
@@ -79,7 +118,7 @@
       color: var(--text-secondary);
     }
 
-    button {
+    button.action-btn {
       padding: 12px 24px;
       font-size: 1em;
       margin-top: 20px;
@@ -93,12 +132,12 @@
       box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
     }
 
-    button:hover:not(:disabled) {
+    button.action-btn:hover:not(:disabled) {
       background: var(--primary-hover);
       transform: scale(1.03);
     }
 
-    button:disabled {
+    button.action-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
@@ -119,153 +158,350 @@
       margin-top: 20px;
     }
 
+    .notification-fallback {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--card-bg);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      font-size: 0.95em;
+      max-width: 300px;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .notification-fallback.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 0.8em;
+      pointer-events: none;
+      z-index: 999;
+    }
+
     @media (max-width: 600px) {
+      .filter-btn { padding: 8px 16px; font-size: 0.9em; }
       .movie-title { font-size: 1.4em; }
       h1 { font-size: 1.5em; }
-      button { padding: 10px 20px; font-size: 0.95em; }
+      .action-btn { padding: 10px 20px; font-size: 0.95em; }
     }
   </style>
 </head>
 <body>
-  <h1>🎬 TV ~ Random</h1>
-  <button id="load-btn">Otra película</button>
+  <h1>🎬 TV Random</h1>
+
+  <div class="filters">
+    <button class="filter-btn active" data-type="movie">Películas (este año)</button>
+    <button class="filter-btn" data-type="tv">Series (en emisión y próximas)</button>
+  </div>
+
+  <div class="status-bar" aria-live="polite">
+    <span id="last-update"></span> • Próxima actualización: <span id="countdown" class="countdown">--:--</span>
+  </div>
+
+  <button id="load-btn" class="action-btn">¿QUÉ VER? +</button>
 
   <div id="loading" class="loading">Cargando...</div>
   <div id="movie-container" class="movie-card"></div>
 
+  <div id="notification-fallback" class="notification-fallback"></div>
+  <div class="watermark">TV_RM</div>
+
   <script>
-    // ✅ Configuración segura y centralizada
     const CONFIG = {
       API_KEY: '487ec2ee423ac20f42f80d2ee5aebab8',
       BASE_URL: 'https://api.themoviedb.org/3',
       IMG_BASE_URL: 'https://image.tmdb.org/t/p/w500',
       MAX_RETRIES: 3,
       INITIAL_DELAY: 1000,
+      AUTO_UPDATE_INTERVAL: 60 * 60 * 1000,
     };
 
-    let totalPagesCache = null;
-    let currentAbortController = null;
+    const State = {
+      currentType: 'movie',
+      currentAbortController: null,
+      autoUpdateTimer: null,
+      lastUpdate: null,
+      isPageVisible: true,
+      isLoading: false,
+      lastItem: null,
+      cache: { movie: [], tv: [] },
+      cacheExpiry: { movie: 0, tv: 0 },
+    };
 
-    // ✅ Función genérica para fetch con reintentos y abort
+    function cleanup() {
+      if (State.currentAbortController) {
+        State.currentAbortController.abort();
+        State.currentAbortController = null;
+      }
+      if (State.autoUpdateTimer) {
+        clearTimeout(State.autoUpdateTimer);
+        State.autoUpdateTimer = null;
+      }
+    }
+
+    function formatTime(date) {
+      return new Intl.DateTimeFormat('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    }
+
+    function showFallbackNotification(message) {
+      const el = document.getElementById('notification-fallback');
+      el.textContent = message;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 5000);
+    }
+
+    async function requestNotificationPermission() {
+      if (!("Notification" in window)) return false;
+      if (Notification.permission === "granted") return true;
+      if (Notification.permission === "denied") return false;
+      return (await Notification.requestPermission()) === "granted";
+    }
+
+    function showNotification(title, body) {
+      if (Notification.permission === "granted") {
+        new Notification(title, {
+          body,
+          icon: 'https://www.themoviedb.org/assets/2/apple-touch-icon-cfba7699efe7a742de25c28e08c38525f19381d31087c69e89d6bcb8e3c0ddfa.png'
+        });
+      } else {
+        showFallbackNotification(body);
+      }
+    }
+
+    function updateCountdown() {
+      if (!State.lastUpdate) return;
+      const next = new Date(State.lastUpdate.getTime() + CONFIG.AUTO_UPDATE_INTERVAL);
+      const now = new Date();
+      if (next <= now) {
+        document.getElementById('countdown').textContent = '--:--';
+        return;
+      }
+      const diff = next - now;
+      const mins = Math.floor(diff / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      document.getElementById('countdown').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      setTimeout(updateCountdown, 1000);
+    }
+
     async function fetchWithRetry(url, retries = CONFIG.MAX_RETRIES, delay = CONFIG.INITIAL_DELAY) {
-      for (let attempt = 0; attempt <= retries; attempt++) {
+      for (let i = 0; i <= retries; i++) {
         try {
-          const response = await fetch(url, {
-            signal: currentAbortController?.signal,
+          const res = await fetch(url, {
+            signal: State.currentAbortController?.signal,
             headers: { Accept: 'application/json' }
           });
-
-          if (!response.ok) {
-            if (response.status === 429 && attempt < retries) {
-              await new Promise(r => setTimeout(r, delay * (2 ** attempt)));
+          if (!res.ok) {
+            if (res.status === 429 && i < retries) {
+              await new Promise(r => setTimeout(r, delay * (2 ** i)));
               continue;
             }
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            throw new Error(`HTTP ${res.status}`);
           }
-
-          return await response.json();
+          return await res.json();
         } catch (err) {
           if (err.name === 'AbortError') throw err;
-          if (attempt === retries) throw err;
-          await new Promise(r => setTimeout(r, delay * (2 ** attempt)));
+          if (i === retries) throw err;
+          await new Promise(r => setTimeout(r, delay * (2 ** i)));
         }
       }
     }
 
-    // ✅ Obtener total de páginas (cacheado)
-    async function getTotalPages() {
-      if (totalPagesCache) return totalPagesCache;
-      const data = await fetchWithRetry(
-        `${CONFIG.BASE_URL}/discover/movie?api_key=${CONFIG.API_KEY}&sort_by=popularity.desc`
-      );
-      totalPagesCache = data.total_pages;
-      return totalPagesCache;
-    }
+    const CURRENT_YEAR = new Date().getFullYear();
 
-    // ✅ Obtener película aleatoria con validación
-    async function getRandomMovie() {
-      const totalPages = await getTotalPages();
-      const randomPage = Math.floor(Math.random() * totalPages) + 1;
-      const data = await fetchWithRetry(
-        `${CONFIG.BASE_URL}/discover/movie?api_key=${CONFIG.API_KEY}&page=${randomPage}`
-      );
-
-      const validMovies = data.results.filter(movie => movie.poster_path && movie.title);
-      if (validMovies.length === 0) {
-        throw new Error('No se encontraron películas válidas en esta página.');
+    async function fetchMoviesThisYear() {
+      const now = Date.now();
+      if (State.cache.movie.length > 0 && now < State.cacheExpiry.movie) {
+        return State.cache.movie;
       }
 
-      return validMovies[Math.floor(Math.random() * validMovies.length)];
+      const data = await fetchWithRetry(
+        `${CONFIG.BASE_URL}/discover/movie?api_key=${CONFIG.API_KEY}&primary_release_year=${CURRENT_YEAR}&sort_by=popularity.desc&language=es-ES`
+      );
+      const valid = data.results.filter(m =>
+        m.poster_path && m.title && m.release_date && new Date(m.release_date).getFullYear() === CURRENT_YEAR
+      );
+      State.cache.movie = valid;
+      State.cacheExpiry.movie = now + 10 * 60 * 1000;
+      return valid;
     }
 
-    // ✅ Renderizar película de forma segura (DOM manipulation, no innerHTML)
-    function renderMovie(movie) {
+    async function fetchTVCurrentAndUpcoming() {
+      const now = Date.now();
+      if (State.cache.tv.length > 0 && now < State.cacheExpiry.tv) {
+        return State.cache.tv;
+      }
+
+      const [onAir, upcoming] = await Promise.all([
+        fetchWithRetry(`${CONFIG.BASE_URL}/tv/on_the_air?api_key=${CONFIG.API_KEY}&language=es-ES&page=1`),
+        fetchWithRetry(`${CONFIG.BASE_URL}/tv/upcoming?api_key=${CONFIG.API_KEY}&language=es-ES&page=1`)
+      ]);
+
+      const valid = [...(onAir.results || []), ...(upcoming.results || [])].filter(s => s.poster_path && s.name);
+      State.cache.tv = valid;
+      State.cacheExpiry.tv = now + 10 * 60 * 1000;
+      return valid;
+    }
+
+    async function getRandomContent(type) {
+      let items = [];
+      if (type === 'movie') {
+        items = await fetchMoviesThisYear();
+      } else if (type === 'tv') {
+        items = await fetchTVCurrentAndUpcoming();
+      }
+      if (items.length === 0) {
+        throw new Error(type === 'movie'
+          ? `No hay películas de estreno en ${CURRENT_YEAR}.`
+          : 'No hay series en emisión ni próximas.'
+        );
+      }
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function renderContent(item, type) {
       const container = document.getElementById('movie-container');
-      container.innerHTML = ''; // Limpiar
+      container.innerHTML = '';
 
       const img = document.createElement('img');
       img.className = 'movie-poster';
-      img.src = `${CONFIG.IMG_BASE_URL}${movie.poster_path}`;
-      img.alt = movie.title;
+      img.src = `${CONFIG.IMG_BASE_URL}${item.poster_path}`;
+      img.alt = type === 'movie' ? `Póster de ${item.title}` : `Póster de ${item.name}`;
       img.loading = 'lazy';
 
       const title = document.createElement('div');
       title.className = 'movie-title';
-      title.textContent = `${movie.title} (${movie.release_date ? movie.release_date.substring(0, 4) : 'N/A'})`;
+      const name = type === 'movie' ? item.title : item.name;
+      const year = type === 'movie'
+        ? (item.release_date ? item.release_date.substring(0, 4) : 'N/A')
+        : (item.first_air_date ? item.first_air_date.substring(0, 4) : 'N/A');
+      title.textContent = `${name} (${year})`;
 
-      const overview = document.createElement('div');
+      const overview = document.createElement('p');
       overview.className = 'movie-overview';
-      overview.textContent = movie.overview || 'Sin descripción disponible.';
+      overview.textContent = item.overview || 'Sin descripción disponible.';
 
       container.appendChild(img);
       container.appendChild(title);
       container.appendChild(overview);
       container.classList.add('visible');
+
+      State.lastItem = { item, type };
     }
 
-    // ✅ Renderizar error
     function renderError(message) {
       const container = document.getElementById('movie-container');
       container.innerHTML = '';
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'error';
-      errorDiv.textContent = `❌ ${message}`;
-      container.appendChild(errorDiv);
+      const err = document.createElement('div');
+      err.className = 'error';
+      err.textContent = `❌ ${message}`;
+      container.appendChild(err);
       container.classList.add('visible');
     }
 
-    // ✅ Cargar película con control de estado
-    async function loadRandomMovie() {
+    async function loadContent(isAuto = false) {
+      if (!State.isPageVisible && isAuto) return;
+      if (State.isLoading) return;
+
+      State.isLoading = true;
+
       const btn = document.getElementById('load-btn');
       const loading = document.getElementById('loading');
       const container = document.getElementById('movie-container');
 
-      // Cancelar solicitud anterior
-      if (currentAbortController) currentAbortController.abort();
-      currentAbortController = new AbortController();
+      cleanup();
+      State.currentAbortController = new AbortController();
 
-      // Estado de carga
       btn.disabled = true;
       loading.style.display = 'block';
       container.classList.remove('visible');
 
+      let item;
       try {
-        const movie = await getRandomMovie();
-        renderMovie(movie);
+        item = await getRandomContent(State.currentType);
+        renderContent(item, State.currentType);
+
+        State.lastUpdate = new Date();
+        document.getElementById('last-update').textContent = `Última: ${formatTime(State.lastUpdate)}`;
+        updateCountdown();
+
+        if (isAuto && State.lastItem) {
+          const isNew = !State.lastItem ||
+            (State.lastItem.type !== State.currentType) ||
+            (State.lastItem.item.id !== item.id);
+          if (isNew) {
+            await requestNotificationPermission();
+            const title = State.currentType === 'movie' ? 'Nueva película de estreno' : 'Nueva serie sugerida';
+            showNotification(`🎬 ${title}`, `"${State.currentType === 'movie' ? item.title : item.name}"`);
+          }
+        }
       } catch (error) {
-        console.error('Error al cargar película:', error);
-        renderError(error.message || 'Inténtalo de nuevo más tarde.');
+        console.error('Error:', error);
+        if (State.lastItem && !isAuto) {
+          renderContent(State.lastItem.item, State.lastItem.type);
+        } else {
+          renderError(error.message || 'No se pudo cargar contenido.');
+        }
       } finally {
         loading.style.display = 'none';
         btn.disabled = false;
+        State.isLoading = false;
+        if (isAuto) scheduleAutoUpdate();
       }
     }
 
-    // ✅ Inicialización
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('load-btn').addEventListener('click', loadRandomMovie);
-      loadRandomMovie(); // Cargar primera película
+    function scheduleAutoUpdate() {
+      cleanup();
+      State.autoUpdateTimer = setTimeout(() => loadContent(true), CONFIG.AUTO_UPDATE_INTERVAL);
+      updateCountdown();
+    }
+
+    let visibilityDebounce = null;
+    document.addEventListener('visibilitychange', () => {
+      State.isPageVisible = !document.hidden;
+      if (visibilityDebounce) clearTimeout(visibilityDebounce);
+      if (State.isPageVisible && State.lastUpdate) {
+        visibilityDebounce = setTimeout(() => {
+          const elapsed = Date.now() - State.lastUpdate.getTime();
+          const remaining = Math.max(0, CONFIG.AUTO_UPDATE_INTERVAL - elapsed);
+          if (!State.autoUpdateTimer) {
+            State.autoUpdateTimer = setTimeout(() => loadContent(true), remaining);
+          }
+        }, 300);
+      }
     });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.classList.contains('active')) return;
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          State.currentType = btn.dataset.type;
+          loadContent(false);
+        });
+      });
+
+      document.getElementById('load-btn').addEventListener('click', () => loadContent(false));
+
+      loadContent(false);
+    });
+
+    window.addEventListener('beforeunload', cleanup);
   </script>
 </body>
 </html>
