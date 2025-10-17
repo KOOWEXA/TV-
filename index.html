@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TV_RM</title>
+  <style>
+    :root {
+      --primary: #e50914;
+      --primary-hover: #f40612;
+      --bg: #121212;
+      --card-bg: #1f1f1f;
+      --text: #ffffff;
+      --text-secondary: #b3b3b3;
+      --radius: 12px;
+      --shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 1.8em;
+      margin: 10px 0;
+      text-align: center;
+    }
+
+    .movie-card {
+      background: var(--card-bg);
+      max-width: 600px;
+      width: 100%;
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      text-align: center;
+      margin-top: 20px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .movie-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .movie-poster {
+      max-width: 100%;
+      border-radius: var(--radius);
+      display: block;
+      margin: 0 auto 16px;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      background: #333;
+    }
+
+    .movie-title {
+      font-size: 1.6em;
+      margin: 12px 0;
+      font-weight: 600;
+    }
+
+    .movie-overview {
+      font-size: 1em;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 1em;
+      margin-top: 20px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: scale(1.03);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading {
+      font-size: 1.3em;
+      margin-top: 30px;
+      color: var(--text-secondary);
+      display: none;
+    }
+
+    .error {
+      color: #ff6b6b;
+      padding: 16px;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: var(--radius);
+      margin-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .movie-title { font-size: 1.4em; }
+      h1 { font-size: 1.5em; }
+      button { padding: 10px 20px; font-size: 0.95em; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎬 TV ~ Random</h1>
+  <button id="load-btn" onclick="cargarPeliculaAleatoria()">Otra película</button>
+
+  <div id="loading" class="loading">Cargando...</div>
+  <div id="movie-container" class="movie-card"></div>
+
+  <script>
+    const API_KEY = "TU_API_KEY"; // ⚠️ Reemplaza con tu clave válida de TMDb
+    const BASE_URL = "https://api.themoviedb.org/3";
+    const IMG_BASE_URL = "https://image.tmdb.org/t/p/w500";
+
+    let totalPagesCache = null;
+    let currentAbortController = null;
+
+    // Función con reintentos y manejo de errores
+    async function fetchWithRetry(url, retries = 3, delay = 1000) {
+      for (let i = 0; i <= retries; i++) {
+        try {
+          const response = await fetch(url, { signal: currentAbortController?.signal });
+          if (!response.ok) {
+            if (response.status === 429 && i < retries) {
+              // Too Many Requests: espera más tiempo
+              await new Promise(r => setTimeout(r, delay * (2 ** i)));
+              continue;
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return await response.json();
+        } catch (err) {
+          if (err.name === 'AbortError') throw err;
+          if (i === retries) throw err;
+          await new Promise(r => setTimeout(r, delay * (2 ** i)));
+        }
+      }
+    }
+
+    async function obtenerTotalPeliculas() {
+      if (totalPagesCache) return totalPagesCache;
+      const data = await fetchWithRetry(`${BASE_URL}/discover/movie?api_key=${API_KEY}&sort_by=popularity.desc`);
+      totalPagesCache = data.total_pages;
+      return totalPagesCache;
+    }
+
+    async function obtenerPeliculaAleatoria() {
+      const totalPages = await obtenerTotalPeliculas();
+      const paginaAleatoria = Math.floor(Math.random() * totalPages) + 1;
+      const data = await fetchWithRetry(`${BASE_URL}/discover/movie?api_key=${API_KEY}&page=${paginaAleatoria}`);
+      const peliculas = data.results.filter(p => p.poster_path); // Solo con póster
+      if (peliculas.length === 0) throw new Error("No hay películas con póster en esta página.");
+      return peliculas[Math.floor(Math.random() * peliculas.length)];
+    }
+
+    async function cargarPeliculaAleatoria() {
+      const btn = document.getElementById("load-btn");
+      const loading = document.getElementById("loading");
+      const container = document.getElementById("movie-container");
+
+      // Cancelar petición anterior si existe
+      if (currentAbortController) currentAbortController.abort();
+      currentAbortController = new AbortController();
+
+      // Deshabilitar botón y mostrar carga
+      btn.disabled = true;
+      loading.style.display = "block";
+      container.innerHTML = "";
+      container.classList.remove("visible");
+
+      try {
+        const pelicula = await obtenerPeliculaAleatoria();
+        const posterPath = `${IMG_BASE_URL}${pelicula.poster_path}`;
+
+        container.innerHTML = `
+          <img class="movie-poster" src="${posterPath}" alt="${pelicula.title}" loading="lazy" />
+          <div class="movie-title">${pelicula.title} (${pelicula.release_date?.substring(0,4) || 'N/A'})</div>
+          <div class="movie-overview">${pelicula.overview ? pelicula.overview : "Sin descripción disponible."}</div>
+        `;
+        container.classList.add("visible");
+      } catch (error) {
+        console.error("Error:", error);
+        container.innerHTML = `<div class="error">❌ No se pudo cargar una película. ${error.message || "Inténtalo de nuevo."}</div>`;
+        container.classList.add("visible");
+      } finally {
+        loading.style.display = "none";
+        btn.disabled = false;
+      }
+    }
+
+    window.onload = () => {
+      cargarPeliculaAleatoria();
+    };
+  </script>
+</body>
+</html>
