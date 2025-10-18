@@ -1,30 +1,31 @@
-# 📺 TV+ – Descubre contenido aleatorio de películas y series
+# TV+
 
-Con un solo clic, obtén una **película estrenada este año** o una **serie en emisión o próximamente estrenada**.
+¡Descubre qué ver hoy sin complicaciones!
+
+TV+ es una plataforma web ligera y gratuita que te ofrece recomendaciones aleatorias de **películas en estreno** y **series en emisión o próximas**, actualizadas constantemente. Diseñada para ser rápida, sencilla y sin barreras: no requiere registro, ni permisos innecesarios.
+
+## Características
+
+- 🎬 **Películas recientes**: Explora títulos estrenados este año.
+- 📺 **Series en emisión**: Mantente al día con lo que se está transmitiendo ahora.
+- 🔄 **Actualización automática**: El contenido se renueva periódicamente para mantenerte inspirado.
+- 📱 **Diseño responsive**: Funciona perfectamente en móviles, tablets y escritorio.
+- 🚀 **Carga rápida**: Interfaz minimalista y optimizada para una experiencia fluida.
+- 📢 **Sin registro**: Accede al contenido inmediatamente, sin crear cuentas.
+
+## Cómo usarlo
+
+1. Abre la página en tu navegador.
+2. Elige entre **Películas** o **Series**.
+3. Haz clic en el botón **¿QUÉ VER? +** para obtener una recomendación aleatoria.
+4. ¡Disfruta de tu próxima película o serie!
+
+## Notas
+
+- La plataforma incluye anuncios para mantenerse operativa.
+- Se recomienda una conexión a internet estable para cargar las imágenes y descripciones.
+- TV+ no almacena datos personales ni realiza seguimiento de usuarios.
 
 ---
 
-## 🌟 Características
-
-- **Contenido actualizado en tiempo real**:
-  - Películas estrenadas en el año actual.
-  - Series **en emisión** (`On the Air`) y **próximas a estrenarse** (`Upcoming`).
-- **Interfaz minimalista y oscura**: diseñada para reducir la fatiga visual.
-- **Actualización automática**: cada hora, la app puede notificarte una nueva sugerencia (con permiso).
-- **Sin registro ni cookies**: 100% cliente, sin recopilación de datos.
-- **Totalmente responsiva**: funciona en móviles, tablets y escritorio.
-- **Soporte offline parcial**: si falla la conexión, muestra la última sugerencia válida.
-- **Notificaciones inteligentes**: solo si hay un nuevo contenido distinto al anterior.
-
----
-
-## 🚀 Cómo usarlo
-
-1. Abre la aplicación en tu navegador.
-2. Elige entre:
-   - **Películas (este año)**
-   - **Series (en emisión y próximas)**
-3. Haz clic en el botón **«¿QUÉ VER? +»** para obtener una sugerencia aleatoria.
-4. (Opcional) Permite notificaciones para recibir actualizaciones automáticas cada hora.
-
-¡Listo! Disfruta de tu próxima película o serie sin esfuerzo.
+¿Te gustó? ¡Compártelo con alguien que nunca sabe qué ver!
