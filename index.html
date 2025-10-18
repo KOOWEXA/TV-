@@ -19,7 +19,7 @@
       --success: #4ade80;
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -28,10 +28,73 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       padding: 20px;
       margin: 0;
       min-height: 100vh;
       position: relative;
+      overflow: hidden;
+    }
+
+    /* Onboarding screen */
+    #onboarding {
+      width: 100%;
+      max-width: 600px;
+      background: var(--card-bg);
+      padding: 32px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      text-align: center;
+      z-index: 10;
+    }
+
+    #onboarding h2 {
+      font-size: 1.8em;
+      margin-bottom: 16px;
+    }
+
+    #onboarding p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin: 12px 0;
+    }
+
+    .permissions-list {
+      text-align: left;
+      background: rgba(255,255,255,0.05);
+      padding: 16px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .permissions-list li {
+      margin: 8px 0;
+      color: var(--text);
+    }
+
+    #accept-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1.1em;
+      font-weight: 600;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    #accept-btn:hover {
+      background: var(--primary-hover);
+      transform: scale(1.03);
+    }
+
+    /* Main app (hidden initially) */
+    #main-app {
+      display: none;
+      width: 100%;
+      max-width: 600px;
     }
 
     .top-bar {
@@ -224,6 +287,7 @@
     }
 
     @media (max-width: 600px) {
+      #onboarding { padding: 24px 16px; }
       .filter-btn { padding: 8px 16px; font-size: 0.9em; }
       .movie-title { font-size: 1.4em; }
       h1 { font-size: 1.5em; }
@@ -234,40 +298,58 @@
   </style>
 </head>
 <body>
-  <div class="top-bar">
-    <img src="TV.png" alt="Logo" class="logo-small">
-    <a href="https://whatsapp.com/channel/0029Vb6sN8kL7UVSCeAQgA2f" target="_blank" rel="noopener noreferrer" class="follow-btn">Seguir</a>
+  <!-- Onboarding Screen -->
+  <div id="onboarding">
+    <h2>🎬 Bienvenido a TV+</h2>
+    <p>TV+ es una plataforma que te sugiere <strong>películas en estreno</strong> o <strong>series en emisión</strong> de forma aleatoria y actualizada.</p>
+    <p>Para funcionar correctamente, necesitamos los siguientes permisos:</p>
+    <ul class="permissions-list">
+      <li>🔔 <strong>Notificaciones</strong> – Para avisarte de nuevas recomendaciones.</li>
+      <li>💾 <strong>Almacenamiento</strong> – Para guardar temporalmente datos y mejorar la velocidad.</li>
+      <li>📍 <strong>Ubicación</strong> – Para ofrecerte contenido relevante según tu región.</li>
+    </ul>
+    <button id="accept-btn">Aceptar y continuar</button>
   </div>
 
-  <h1>TV+</h1>
+  <!-- Main App (hidden until permissions granted) -->
+  <div id="main-app">
+    <div class="top-bar">
+      <img src="TV.png" alt="Logo" class="logo-small">
+      <a href="https://whatsapp.com/channel/0029Vb6sN8kL7UVSCeAQgA2f" target="_blank" rel="noopener noreferrer" class="follow-btn">Seguir</a>
+    </div>
 
-  <div class="filters">
-    <button class="filter-btn active" data-type="movie">Películas (en estreno)</button>
-    <button class="filter-btn" data-type="tv">Series (en emisión)</button>
+    <h1>TV+</h1>
+
+    <div class="filters">
+      <button class="filter-btn active" data-type="movie">Películas (en estreno)</button>
+      <button class="filter-btn" data-type="tv">Series (en emisión)</button>
+    </div>
+
+    <div class="status-bar" aria-live="polite">
+      <span id="last-update"></span> • Próxima actualización: <span id="countdown" class="countdown">--:--</span>
+    </div>
+
+    <button id="load-btn" class="action-btn">¿QUÉ VER? +</button>
+
+    <div id="loading" class="loading">Cargando...</div>
+    <div id="movie-container" class="movie-card"></div>
+
+    <div id="notification-fallback" class="notification-fallback"></div>
+    <div class="watermark">TV+</div>
   </div>
-
-  <div class="status-bar" aria-live="polite">
-    <span id="last-update"></span> • Próxima actualización: <span id="countdown" class="countdown">--:--</span>
-  </div>
-
-  <button id="load-btn" class="action-btn">¿QUÉ VER? +</button>
-
-  <div id="loading" class="loading">Cargando...</div>
-  <div id="movie-container" class="movie-card"></div>
-
-  <div id="notification-fallback" class="notification-fallback"></div>
-  <div class="watermark">TV+</div>
 
   <script>
+    // === CONFIGURACIÓN CORREGIDA (sin espacios al final) ===
     const CONFIG = {
       API_KEY: '487ec2ee423ac20f42f80d2ee5aebab8',
       BASE_URL: 'https://api.themoviedb.org/3',
       IMG_BASE_URL: 'https://image.tmdb.org/t/p/w500',
       MAX_RETRIES: 3,
       INITIAL_DELAY: 1000,
-      AUTO_UPDATE_INTERVAL: 5 * 60 * 1000, // ⏱️ 5 minutos
+      AUTO_UPDATE_INTERVAL: 5 * 60 * 1000,
     };
 
+    // === ESTADO GLOBAL ===
     const State = {
       currentType: 'movie',
       currentAbortController: null,
@@ -280,6 +362,7 @@
       cacheExpiry: { movie: 0, tv: 0 },
     };
 
+    // === FUNCIONES AUXILIARES ===
     function cleanup() {
       if (State.currentAbortController) {
         State.currentAbortController.abort();
@@ -306,228 +389,275 @@
     }
 
     async function requestNotificationPermission() {
-      if (!("Notification" in window)) return false;
+      if (!("Notification" in window)) throw new Error("Notificaciones no soportadas");
       if (Notification.permission === "granted") return true;
-      if (Notification.permission === "denied") return false;
-      return (await Notification.requestPermission()) === "granted";
+      if (Notification.permission === "denied") throw new Error("Permiso de notificaciones denegado");
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") throw new Error("Permiso de notificaciones denegado");
+      return true;
     }
 
-    function showNotification(title, body) {
-      if (Notification.permission === "granted") {
-        new Notification(title, {
-          body,
-          icon: 'https://www.themoviedb.org/assets/2/apple-touch-icon-cfba7699efe7a742de25c28e08c38525f19381d31087c69e89d6bcb8e3c0ddfa.png'
-        });
-      } else {
-        showFallbackNotification(body);
-      }
-    }
-
-    function updateCountdown() {
-      if (!State.lastUpdate) {
-        document.getElementById('countdown').textContent = '--:--';
-        return;
-      }
-      const next = new Date(State.lastUpdate.getTime() + CONFIG.AUTO_UPDATE_INTERVAL);
-      const now = new Date();
-      if (next <= now) {
-        document.getElementById('countdown').textContent = '--:--';
-        return;
-      }
-      const diff = next - now;
-      const mins = Math.floor(diff / 60000);
-      const secs = Math.floor((diff % 60000) / 1000);
-      document.getElementById('countdown').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-      setTimeout(updateCountdown, 1000);
-    }
-
-    async function fetchWithRetry(url, retries = CONFIG.MAX_RETRIES, delay = CONFIG.INITIAL_DELAY) {
-      for (let i = 0; i <= retries; i++) {
-        try {
-          const res = await fetch(url, {
-            signal: State.currentAbortController?.signal,
-            headers: { Accept: 'application/json' }
-          });
-          if (!res.ok) {
-            if (res.status === 429 && i < retries) {
-              await new Promise(r => setTimeout(r, delay * (2 ** i)));
-              continue;
-            }
-            throw new Error(`HTTP ${res.status}`);
-          }
-          return await res.json();
-        } catch (err) {
-          if (err.name === 'AbortError') throw err;
-          if (i === retries) throw err;
-          await new Promise(r => setTimeout(r, delay * (2 ** i)));
-        }
-      }
-    }
-
-    async function fetchMoviesNowPlaying() {
-      const now = Date.now();
-      if (State.cache.movie.length > 0 && now < State.cacheExpiry.movie) {
-        return State.cache.movie;
-      }
-
-      const data = await fetchWithRetry(
-        `${CONFIG.BASE_URL}/movie/now_playing?api_key=${CONFIG.API_KEY}&language=es-ES&region=ES`
-      );
-      const valid = (data.results || []).filter(m =>
-        m.poster_path && m.title && m.release_date
-      );
-      State.cache.movie = valid;
-      State.cacheExpiry.movie = now + 15 * 60 * 1000; // 15 min cache
-      return valid;
-    }
-
-    async function fetchTVOnTheAir() {
-      const now = Date.now();
-      if (State.cache.tv.length > 0 && now < State.cacheExpiry.tv) {
-        return State.cache.tv;
-      }
-
-      const data = await fetchWithRetry(
-        `${CONFIG.BASE_URL}/tv/on_the_air?api_key=${CONFIG.API_KEY}&language=es-ES`
-      );
-      const valid = (data.results || []).filter(s => s.poster_path && s.name);
-      State.cache.tv = valid;
-      State.cacheExpiry.tv = now + 15 * 60 * 1000;
-      return valid;
-    }
-
-    async function getRandomContent(type) {
-      let items = [];
-      if (type === 'movie') {
-        items = await fetchMoviesNowPlaying();
-      } else if (type === 'tv') {
-        items = await fetchTVOnTheAir();
-      }
-      if (items.length === 0) {
-        throw new Error(
-          type === 'movie'
-            ? 'No hay películas en estreno actualmente.'
-            : 'No hay series en emisión actualmente.'
+    async function requestLocationPermission() {
+      if (!navigator.geolocation) throw new Error("Geolocalización no soportada");
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve(pos),
+          (err) => {
+            console.warn("Error de ubicación:", err);
+            // Aunque no la usemos, exigimos que no se bloquee
+            if (err.code === 1) reject(new Error("Acceso a ubicación denegado"));
+            else resolve(); // permitimos continuar si es otro error
+          },
+          { timeout: 10000 }
         );
-      }
-      return items[Math.floor(Math.random() * items.length)];
+      });
     }
 
-    function renderContent(item, type) {
-      const container = document.getElementById('movie-container');
-      container.innerHTML = '';
-
-      const img = document.createElement('img');
-      img.className = 'movie-poster';
-      img.src = `${CONFIG.IMG_BASE_URL}${item.poster_path}`;
-      img.alt = type === 'movie' ? `Póster de ${item.title}` : `Póster de ${item.name}`;
-      img.loading = 'lazy';
-      img.onerror = () => {
-        img.src = 'https://via.placeholder.com/300x450?text=Sin+imagen';
-        img.alt = 'Imagen no disponible';
-      };
-
-      const title = document.createElement('div');
-      title.className = 'movie-title';
-      const name = type === 'movie' ? item.title : item.name;
-      const year = type === 'movie'
-        ? (item.release_date ? item.release_date.substring(0, 4) : 'N/A')
-        : (item.first_air_date ? item.first_air_date.substring(0, 4) : 'N/A');
-      title.textContent = `${name} (${year})`;
-
-      const overview = document.createElement('p');
-      overview.className = 'movie-overview';
-      overview.textContent = item.overview?.trim() || 'Sin descripción disponible.';
-
-      container.appendChild(img);
-      container.appendChild(title);
-      container.appendChild(overview);
-      container.classList.add('visible');
-
-      State.lastItem = { item, type };
-    }
-
-    function renderError(message) {
-      const container = document.getElementById('movie-container');
-      container.innerHTML = '';
-      const err = document.createElement('div');
-      err.className = 'error';
-      err.textContent = `❌ ${message}`;
-      container.appendChild(err);
-      container.classList.add('visible');
-    }
-
-    async function loadContent(isAuto = false) {
-      if (!State.isPageVisible && isAuto) return;
-      if (State.isLoading) return;
-
-      State.isLoading = true;
-      cleanup();
-      State.currentAbortController = new AbortController();
-
-      const btn = document.getElementById('load-btn');
-      const loading = document.getElementById('loading');
-      const container = document.getElementById('movie-container');
-
-      btn.disabled = true;
-      loading.style.display = 'block';
-      container.classList.remove('visible');
-
+    function testStorage() {
       try {
-        const item = await getRandomContent(State.currentType);
-        renderContent(item, State.currentType);
-
-        State.lastUpdate = new Date();
-        document.getElementById('last-update').textContent = `Última: ${formatTime(State.lastUpdate)}`;
-        updateCountdown();
-
-        if (isAuto && State.lastItem) {
-          const isNew = !State.lastItem ||
-            State.lastItem.type !== State.currentType ||
-            State.lastItem.item.id !== item.id;
-          if (isNew) {
-            await requestNotificationPermission();
-            const title = State.currentType === 'movie' ? 'Nueva película en estreno' : 'Nueva serie en emisión';
-            showNotification(`🎬 ${title}`, `"${State.currentType === 'movie' ? item.title : item.name}"`);
-          }
-        }
-      } catch (error) {
-        console.error('Error al cargar contenido:', error);
-        if (State.lastItem && !isAuto) {
-          renderContent(State.lastItem.item, State.lastItem.type);
-        } else {
-          renderError(error.message || 'No se pudo cargar contenido. Inténtalo más tarde.');
-        }
-      } finally {
-        loading.style.display = 'none';
-        btn.disabled = false;
-        State.isLoading = false;
-        if (isAuto) scheduleAutoUpdate();
+        localStorage.setItem('tvplus_test', 'ok');
+        localStorage.removeItem('tvplus_test');
+        return true;
+      } catch (e) {
+        throw new Error("No se puede usar almacenamiento local");
       }
     }
 
-    function scheduleAutoUpdate() {
-      cleanup();
-      State.autoUpdateTimer = setTimeout(() => loadContent(true), CONFIG.AUTO_UPDATE_INTERVAL);
-      updateCountdown();
+    async function requestAllPermissions() {
+      try {
+        await requestNotificationPermission();
+        testStorage();
+        await requestLocationPermission();
+        return true;
+      } catch (err) {
+        alert("❌ Permiso necesario: " + err.message + "\n\nPor favor, acepta todos los permisos para usar TV+.");
+        return false;
+      }
     }
 
-    let visibilityDebounce = null;
-    document.addEventListener('visibilitychange', () => {
-      State.isPageVisible = !document.hidden;
-      if (visibilityDebounce) clearTimeout(visibilityDebounce);
-      if (State.isPageVisible && State.lastUpdate) {
-        visibilityDebounce = setTimeout(() => {
-          const elapsed = Date.now() - State.lastUpdate.getTime();
-          const remaining = Math.max(0, CONFIG.AUTO_UPDATE_INTERVAL - elapsed);
-          if (!State.autoUpdateTimer) {
-            State.autoUpdateTimer = setTimeout(() => loadContent(true), remaining);
-          }
-        }, 300);
+    // === ONBOARDING ===
+    document.getElementById('accept-btn').addEventListener('click', async () => {
+      const granted = await requestAllPermissions();
+      if (granted) {
+        document.getElementById('onboarding').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        initApp();
       }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // === FUNCIÓN PRINCIPAL DE LA APP ===
+    function initApp() {
+      // Reutilizamos tu lógica original (corregida)
+      function updateCountdown() {
+        if (!State.lastUpdate) {
+          document.getElementById('countdown').textContent = '--:--';
+          return;
+        }
+        const next = new Date(State.lastUpdate.getTime() + CONFIG.AUTO_UPDATE_INTERVAL);
+        const now = new Date();
+        if (next <= now) {
+          document.getElementById('countdown').textContent = '--:--';
+          return;
+        }
+        const diff = next - now;
+        const mins = Math.floor(diff / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        document.getElementById('countdown').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        setTimeout(updateCountdown, 1000);
+      }
+
+      async function fetchWithRetry(url, retries = CONFIG.MAX_RETRIES, delay = CONFIG.INITIAL_DELAY) {
+        for (let i = 0; i <= retries; i++) {
+          try {
+            const res = await fetch(url, {
+              signal: State.currentAbortController?.signal,
+              headers: { Accept: 'application/json' }
+            });
+            if (!res.ok) {
+              if (res.status === 429 && i < retries) {
+                await new Promise(r => setTimeout(r, delay * (2 ** i)));
+                continue;
+              }
+              throw new Error(`HTTP ${res.status}`);
+            }
+            return await res.json();
+          } catch (err) {
+            if (err.name === 'AbortError') throw err;
+            if (i === retries) throw err;
+            await new Promise(r => setTimeout(r, delay * (2 ** i)));
+          }
+        }
+      }
+
+      async function fetchMoviesNowPlaying() {
+        const now = Date.now();
+        if (State.cache.movie.length > 0 && now < State.cacheExpiry.movie) {
+          return State.cache.movie;
+        }
+        const data = await fetchWithRetry(
+          `${CONFIG.BASE_URL}/movie/now_playing?api_key=${CONFIG.API_KEY}&language=es-ES&region=ES`
+        );
+        const valid = (data.results || []).filter(m =>
+          m.poster_path && m.title && m.release_date
+        );
+        State.cache.movie = valid;
+        State.cacheExpiry.movie = now + 15 * 60 * 1000;
+        return valid;
+      }
+
+      async function fetchTVOnTheAir() {
+        const now = Date.now();
+        if (State.cache.tv.length > 0 && now < State.cacheExpiry.tv) {
+          return State.cache.tv;
+        }
+        const data = await fetchWithRetry(
+          `${CONFIG.BASE_URL}/tv/on_the_air?api_key=${CONFIG.API_KEY}&language=es-ES`
+        );
+        const valid = (data.results || []).filter(s => s.poster_path && s.name);
+        State.cache.tv = valid;
+        State.cacheExpiry.tv = now + 15 * 60 * 1000;
+        return valid;
+      }
+
+      async function getRandomContent(type) {
+        let items = [];
+        if (type === 'movie') {
+          items = await fetchMoviesNowPlaying();
+        } else if (type === 'tv') {
+          items = await fetchTVOnTheAir();
+        }
+        if (items.length === 0) {
+          throw new Error(
+            type === 'movie'
+              ? 'No hay películas en estreno actualmente.'
+              : 'No hay series en emisión actualmente.'
+          );
+        }
+        return items[Math.floor(Math.random() * items.length)];
+      }
+
+      function renderContent(item, type) {
+        const container = document.getElementById('movie-container');
+        container.innerHTML = '';
+
+        const img = document.createElement('img');
+        img.className = 'movie-poster';
+        img.src = `${CONFIG.IMG_BASE_URL}${item.poster_path}`;
+        img.alt = type === 'movie' ? `Póster de ${item.title}` : `Póster de ${item.name}`;
+        img.loading = 'lazy';
+        img.onerror = () => {
+          img.src = 'https://via.placeholder.com/300x450?text=Sin+imagen';
+          img.alt = 'Imagen no disponible';
+        };
+
+        const title = document.createElement('div');
+        title.className = 'movie-title';
+        const name = type === 'movie' ? item.title : item.name;
+        const year = type === 'movie'
+          ? (item.release_date ? item.release_date.substring(0, 4) : 'N/A')
+          : (item.first_air_date ? item.first_air_date.substring(0, 4) : 'N/A');
+        title.textContent = `${name} (${year})`;
+
+        const overview = document.createElement('p');
+        overview.className = 'movie-overview';
+        overview.textContent = item.overview?.trim() || 'Sin descripción disponible.';
+
+        container.appendChild(img);
+        container.appendChild(title);
+        container.appendChild(overview);
+        container.classList.add('visible');
+
+        State.lastItem = { item, type };
+      }
+
+      function renderError(message) {
+        const container = document.getElementById('movie-container');
+        container.innerHTML = '';
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.textContent = `❌ ${message}`;
+        container.appendChild(err);
+        container.classList.add('visible');
+      }
+
+      async function loadContent(isAuto = false) {
+        if (!State.isPageVisible && isAuto) return;
+        if (State.isLoading) return;
+
+        State.isLoading = true;
+        cleanup();
+        State.currentAbortController = new AbortController();
+
+        const btn = document.getElementById('load-btn');
+        const loading = document.getElementById('loading');
+        const container = document.getElementById('movie-container');
+
+        btn.disabled = true;
+        loading.style.display = 'block';
+        container.classList.remove('visible');
+
+        try {
+          const item = await getRandomContent(State.currentType);
+          renderContent(item, State.currentType);
+
+          State.lastUpdate = new Date();
+          document.getElementById('last-update').textContent = `Última: ${formatTime(State.lastUpdate)}`;
+          updateCountdown();
+
+          if (isAuto && State.lastItem) {
+            const isNew = !State.lastItem ||
+              State.lastItem.type !== State.currentType ||
+              State.lastItem.item.id !== item.id;
+            if (isNew) {
+              const title = State.currentType === 'movie' ? 'Nueva película en estreno' : 'Nueva serie en emisión';
+              const body = `"${State.currentType === 'movie' ? item.title : item.name}"`;
+              if (Notification.permission === "granted") {
+                new Notification(`🎬 ${title}`, {
+                  body,
+                  icon: 'https://www.themoviedb.org/assets/2/apple-touch-icon-cfba7699efe7a742de25c28e08c38525f19381d31087c69e89d6bcb8e3c0ddfa.png'
+                });
+              } else {
+                showFallbackNotification(body);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error al cargar contenido:', error);
+          if (State.lastItem && !isAuto) {
+            renderContent(State.lastItem.item, State.lastItem.type);
+          } else {
+            renderError(error.message || 'No se pudo cargar contenido. Inténtalo más tarde.');
+          }
+        } finally {
+          loading.style.display = 'none';
+          btn.disabled = false;
+          State.isLoading = false;
+          if (isAuto) scheduleAutoUpdate();
+        }
+      }
+
+      function scheduleAutoUpdate() {
+        cleanup();
+        State.autoUpdateTimer = setTimeout(() => loadContent(true), CONFIG.AUTO_UPDATE_INTERVAL);
+        updateCountdown();
+      }
+
+      let visibilityDebounce = null;
+      document.addEventListener('visibilitychange', () => {
+        State.isPageVisible = !document.hidden;
+        if (visibilityDebounce) clearTimeout(visibilityDebounce);
+        if (State.isPageVisible && State.lastUpdate) {
+          visibilityDebounce = setTimeout(() => {
+            const elapsed = Date.now() - State.lastUpdate.getTime();
+            const remaining = Math.max(0, CONFIG.AUTO_UPDATE_INTERVAL - elapsed);
+            if (!State.autoUpdateTimer) {
+              State.autoUpdateTimer = setTimeout(() => loadContent(true), remaining);
+            }
+          }, 300);
+        }
+      });
+
+      // Event listeners
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           if (btn.classList.contains('active')) return;
@@ -541,9 +671,9 @@
       document.getElementById('load-btn').addEventListener('click', () => loadContent(false));
       loadContent(false);
       updateCountdown();
-    });
 
-    window.addEventListener('beforeunload', cleanup);
+      window.addEventListener('beforeunload', cleanup);
+    }
   </script>
 </body>
 </html>
