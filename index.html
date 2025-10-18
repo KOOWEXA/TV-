@@ -235,20 +235,15 @@
 </head>
 <body>
   <div class="top-bar">
-    <img src="TV.png"
-         alt="Logo"
-         class="logo-small">
-    <a href="https://whatsapp.com/channel/0029Vb6sN8kL7UVSCeAQgA2f"
-       target="_blank"
-       rel="noopener noreferrer"
-       class="follow-btn">Seguir</a>
+    <img src="TV.png" alt="Logo" class="logo-small">
+    <a href="https://whatsapp.com/channel/0029Vb6sN8kL7UVSCeAQgA2f" target="_blank" rel="noopener noreferrer" class="follow-btn">Seguir</a>
   </div>
 
   <h1>TV+</h1>
 
   <div class="filters">
-    <button class="filter-btn active" data-type="movie">Películas (este año)</button>
-    <button class="filter-btn" data-type="tv">Series (en emisión y próximas)</button>
+    <button class="filter-btn active" data-type="movie">Películas (en estreno)</button>
+    <button class="filter-btn" data-type="tv">Series (en emisión)</button>
   </div>
 
   <div class="status-bar" aria-live="polite">
@@ -270,7 +265,7 @@
       IMG_BASE_URL: 'https://image.tmdb.org/t/p/w500',
       MAX_RETRIES: 3,
       INITIAL_DELAY: 1000,
-      AUTO_UPDATE_INTERVAL: 60 * 60 * 1000,
+      AUTO_UPDATE_INTERVAL: 5 * 60 * 1000, // ⏱️ 5 minutos
     };
 
     const State = {
@@ -329,7 +324,10 @@
     }
 
     function updateCountdown() {
-      if (!State.lastUpdate) return;
+      if (!State.lastUpdate) {
+        document.getElementById('countdown').textContent = '--:--';
+        return;
+      }
       const next = new Date(State.lastUpdate.getTime() + CONFIG.AUTO_UPDATE_INTERVAL);
       const now = new Date();
       if (next <= now) {
@@ -366,53 +364,50 @@
       }
     }
 
-    const CURRENT_YEAR = new Date().getFullYear();
-
-    async function fetchMoviesThisYear() {
+    async function fetchMoviesNowPlaying() {
       const now = Date.now();
       if (State.cache.movie.length > 0 && now < State.cacheExpiry.movie) {
         return State.cache.movie;
       }
 
       const data = await fetchWithRetry(
-        `${CONFIG.BASE_URL}/discover/movie?api_key=${CONFIG.API_KEY}&primary_release_year=${CURRENT_YEAR}&sort_by=popularity.desc&language=es-ES`
+        `${CONFIG.BASE_URL}/movie/now_playing?api_key=${CONFIG.API_KEY}&language=es-ES&region=ES`
       );
-      const valid = data.results.filter(m =>
-        m.poster_path && m.title && m.release_date && new Date(m.release_date).getFullYear() === CURRENT_YEAR
+      const valid = (data.results || []).filter(m =>
+        m.poster_path && m.title && m.release_date
       );
       State.cache.movie = valid;
-      State.cacheExpiry.movie = now + 10 * 60 * 1000;
+      State.cacheExpiry.movie = now + 15 * 60 * 1000; // 15 min cache
       return valid;
     }
 
-    async function fetchTVCurrentAndUpcoming() {
+    async function fetchTVOnTheAir() {
       const now = Date.now();
       if (State.cache.tv.length > 0 && now < State.cacheExpiry.tv) {
         return State.cache.tv;
       }
 
-      const [onAir, upcoming] = await Promise.all([
-        fetchWithRetry(`${CONFIG.BASE_URL}/tv/on_the_air?api_key=${CONFIG.API_KEY}&language=es-ES&page=1`),
-        fetchWithRetry(`${CONFIG.BASE_URL}/tv/upcoming?api_key=${CONFIG.API_KEY}&language=es-ES&page=1`)
-      ]);
-
-      const valid = [...(onAir.results || []), ...(upcoming.results || [])].filter(s => s.poster_path && s.name);
+      const data = await fetchWithRetry(
+        `${CONFIG.BASE_URL}/tv/on_the_air?api_key=${CONFIG.API_KEY}&language=es-ES`
+      );
+      const valid = (data.results || []).filter(s => s.poster_path && s.name);
       State.cache.tv = valid;
-      State.cacheExpiry.tv = now + 10 * 60 * 1000;
+      State.cacheExpiry.tv = now + 15 * 60 * 1000;
       return valid;
     }
 
     async function getRandomContent(type) {
       let items = [];
       if (type === 'movie') {
-        items = await fetchMoviesThisYear();
+        items = await fetchMoviesNowPlaying();
       } else if (type === 'tv') {
-        items = await fetchTVCurrentAndUpcoming();
+        items = await fetchTVOnTheAir();
       }
       if (items.length === 0) {
-        throw new Error(type === 'movie'
-          ? `No hay películas de estreno en ${CURRENT_YEAR}.`
-          : 'No hay series en emisión ni próximas.'
+        throw new Error(
+          type === 'movie'
+            ? 'No hay películas en estreno actualmente.'
+            : 'No hay series en emisión actualmente.'
         );
       }
       return items[Math.floor(Math.random() * items.length)];
@@ -427,6 +422,10 @@
       img.src = `${CONFIG.IMG_BASE_URL}${item.poster_path}`;
       img.alt = type === 'movie' ? `Póster de ${item.title}` : `Póster de ${item.name}`;
       img.loading = 'lazy';
+      img.onerror = () => {
+        img.src = 'https://via.placeholder.com/300x450?text=Sin+imagen';
+        img.alt = 'Imagen no disponible';
+      };
 
       const title = document.createElement('div');
       title.className = 'movie-title';
@@ -438,7 +437,7 @@
 
       const overview = document.createElement('p');
       overview.className = 'movie-overview';
-      overview.textContent = item.overview || 'Sin descripción disponible.';
+      overview.textContent = item.overview?.trim() || 'Sin descripción disponible.';
 
       container.appendChild(img);
       container.appendChild(title);
@@ -463,21 +462,19 @@
       if (State.isLoading) return;
 
       State.isLoading = true;
+      cleanup();
+      State.currentAbortController = new AbortController();
 
       const btn = document.getElementById('load-btn');
       const loading = document.getElementById('loading');
       const container = document.getElementById('movie-container');
 
-      cleanup();
-      State.currentAbortController = new AbortController();
-
       btn.disabled = true;
       loading.style.display = 'block';
       container.classList.remove('visible');
 
-      let item;
       try {
-        item = await getRandomContent(State.currentType);
+        const item = await getRandomContent(State.currentType);
         renderContent(item, State.currentType);
 
         State.lastUpdate = new Date();
@@ -486,20 +483,20 @@
 
         if (isAuto && State.lastItem) {
           const isNew = !State.lastItem ||
-            (State.lastItem.type !== State.currentType) ||
-            (State.lastItem.item.id !== item.id);
+            State.lastItem.type !== State.currentType ||
+            State.lastItem.item.id !== item.id;
           if (isNew) {
             await requestNotificationPermission();
-            const title = State.currentType === 'movie' ? 'Nueva película de estreno' : 'Nueva serie sugerida';
+            const title = State.currentType === 'movie' ? 'Nueva película en estreno' : 'Nueva serie en emisión';
             showNotification(`🎬 ${title}`, `"${State.currentType === 'movie' ? item.title : item.name}"`);
           }
         }
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error al cargar contenido:', error);
         if (State.lastItem && !isAuto) {
           renderContent(State.lastItem.item, State.lastItem.type);
         } else {
-          renderError(error.message || 'No se pudo cargar contenido.');
+          renderError(error.message || 'No se pudo cargar contenido. Inténtalo más tarde.');
         }
       } finally {
         loading.style.display = 'none';
@@ -542,8 +539,8 @@
       });
 
       document.getElementById('load-btn').addEventListener('click', () => loadContent(false));
-
       loadContent(false);
+      updateCountdown();
     });
 
     window.addEventListener('beforeunload', cleanup);
