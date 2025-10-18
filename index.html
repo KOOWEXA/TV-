@@ -1,679 +1,114 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>TV+</title>
-  <link rel="icon" href="TV.png" />
+  <meta name="description" content="Descubre películas en estreno y series en emisión con TV+, una plataforma gratuita, rápida y actualizada. Sin registro, sin permisos invasivos.">
+  <link rel="canonical" href="https://koowexa.github.io/TV-/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="TV+">
+  <meta property="og:description" content="Descubre películas en estreno y series en emisión con TV+, una plataforma gratuita, rápida y actualizada.">
+  <meta property="og:image" content="https://github.com/KOOWEXA/TV-/blob/main/TV.png">
+  <meta property="og:url" content="https://koowexa.github.io/TV-/">
+  <meta property="og:locale" content="es_ES">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TV+">
+  <meta name="twitter:description" content="Descubre películas en estreno y series en emisión con TV+, una plataforma gratuita, rápida y actualizada.">
+  <meta name="twitter:image" content="https://github.com/KOOWEXA/TV-/blob/main/TV.png">
+  <link rel="icon" href="TV.png" type="image/png">
   <style>
-    :root {
-      --primary: #e50914;
-      --primary-hover: #f40612;
-      --bg: #121212;
-      --card-bg: #1f1f1f;
-      --text: #ffffff;
-      --text-secondary: #b3b3b3;
-      --text-muted: #666;
-      --radius: 12px;
-      --shadow: 0 8px 24px rgba(0,0,0,0.5);
-      --success: #4ade80;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      margin: 0;
-      min-height: 100vh;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Onboarding screen */
-    #onboarding {
-      width: 100%;
-      max-width: 600px;
-      background: var(--card-bg);
-      padding: 32px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      text-align: center;
-      z-index: 10;
-    }
-
-    #onboarding h2 {
-      font-size: 1.8em;
-      margin-bottom: 16px;
-    }
-
-    #onboarding p {
-      color: var(--text-secondary);
-      line-height: 1.6;
-      margin: 12px 0;
-    }
-
-    .permissions-list {
-      text-align: left;
-      background: rgba(255,255,255,0.05);
-      padding: 16px;
-      border-radius: 8px;
-      margin: 20px 0;
-    }
-
-    .permissions-list li {
-      margin: 8px 0;
-      color: var(--text);
-    }
-
-    #accept-btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      font-size: 1.1em;
-      font-weight: 600;
-      border-radius: 30px;
-      cursor: pointer;
-      margin-top: 20px;
-      transition: background 0.2s, transform 0.1s;
-    }
-
-    #accept-btn:hover {
-      background: var(--primary-hover);
-      transform: scale(1.03);
-    }
-
-    /* Main app (hidden initially) */
-    #main-app {
-      display: none;
-      width: 100%;
-      max-width: 600px;
-    }
-
-    .top-bar {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      z-index: 100;
-    }
-
-    .logo-small {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-    }
-
-    .follow-btn {
-      background: var(--primary);
-      color: white;
-      text-decoration: none;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.85em;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-
-    .follow-btn:hover {
-      background: var(--primary-hover);
-      text-decoration: none;
-    }
-
-    h1 {
-      font-size: 1.8em;
-      margin: 10px 0;
-      text-align: center;
-    }
-
-    .filters {
-      display: flex;
-      gap: 12px;
-      margin: 16px 0;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .filter-btn {
-      padding: 10px 20px;
-      font-size: 1em;
-      background: #333;
-      color: var(--text-secondary);
-      border: 1px solid #444;
-      border-radius: 30px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .filter-btn.active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-
-    .status-bar {
-      font-size: 0.85em;
-      color: var(--text-muted);
-      margin-top: 4px;
-      text-align: center;
-      min-height: 1.4em;
-    }
-
-    .countdown {
-      font-weight: bold;
-      color: var(--success);
-    }
-
-    .movie-card {
-      background: var(--card-bg);
-      max-width: 600px;
-      width: 100%;
-      padding: 20px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      text-align: center;
-      margin-top: 16px;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.4s ease, transform 0.4s ease;
-    }
-
-    .movie-card.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .movie-poster {
-      max-width: 100%;
-      border-radius: var(--radius);
-      display: block;
-      margin: 0 auto 16px;
-      aspect-ratio: 2/3;
-      object-fit: cover;
-      background: #333;
-    }
-
-    .movie-title {
-      font-size: 1.6em;
-      margin: 12px 0;
-      font-weight: 600;
-    }
-
-    .movie-overview {
-      font-size: 1em;
-      line-height: 1.6;
-      color: var(--text-secondary);
-    }
-
-    button.action-btn {
-      padding: 12px 24px;
-      font-size: 1em;
-      margin-top: 20px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 30px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.2s, transform 0.1s;
-      box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
-    }
-
-    button.action-btn:hover:not(:disabled) {
-      background: var(--primary-hover);
-      transform: scale(1.03);
-    }
-
-    button.action-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .loading {
-      font-size: 1.3em;
-      margin-top: 30px;
-      color: var(--text-secondary);
-      display: none;
-    }
-
-    .error {
-      color: #ff6b6b;
-      padding: 16px;
-      background: rgba(255, 107, 107, 0.1);
-      border-radius: var(--radius);
-      margin-top: 20px;
-    }
-
-    .notification-fallback {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--card-bg);
-      color: white;
-      padding: 12px 16px;
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      font-size: 0.95em;
-      max-width: 300px;
-      z-index: 1000;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.3s, transform 0.3s;
-    }
-
-    .notification-fallback.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .watermark {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      color: rgba(255, 255, 255, 0.3);
-      font-size: 0.8em;
-      pointer-events: none;
-      z-index: 999;
-    }
-
-    @media (max-width: 600px) {
-      #onboarding { padding: 24px 16px; }
-      .filter-btn { padding: 8px 16px; font-size: 0.9em; }
-      .movie-title { font-size: 1.4em; }
-      h1 { font-size: 1.5em; }
-      .action-btn { padding: 10px 20px; font-size: 0.95em; }
-      .top-bar { top: 12px; left: 12px; }
-      .logo-small { width: 28px; height: 28px; }
-    }
+    :root{--primary:#e50914;--primary-hover:#f40612;--bg:#121212;--card-bg:#1f1f1f;--text:#ffffff;--text-secondary:#b3b3b3;--text-muted:#666;--radius:12px;--shadow:0 8px 24px rgba(0,0,0,.5);--success:#4ade80;--promo:#ff6f00}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;margin:0;min-height:100vh;position:relative;overflow:hidden}
+    #onboarding{width:100%;max-width:600px;background:var(--card-bg);padding:32px;border-radius:var(--radius);box-shadow:var(--shadow);text-align:center;z-index:10}
+    #onboarding h2{font-size:1.8em;margin-bottom:16px}
+    #onboarding p{color:var(--text-secondary);line-height:1.6;margin:12px 0}
+    .permissions-list{text-align:left;background:rgba(255,255,255,.05);padding:16px;border-radius:8px;margin:20px 0}
+    .permissions-list li{margin:8px 0;color:var(--text)}
+    #accept-btn{background:var(--primary);color:white;border:none;padding:12px 24px;font-size:1.1em;font-weight:600;border-radius:30px;cursor:pointer;margin-top:20px;transition:background .2s,transform .1s}
+    #accept-btn:hover{background:var(--primary-hover);transform:scale(1.03)}
+    #main-app{display:none;width:100%;max-width:600px}
+    .top-bar{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:8px;z-index:100}
+    .logo-small{width:32px;height:32px;border-radius:8px}
+    .follow-btn{background:var(--primary);color:white;text-decoration:none;padding:4px 10px;border-radius:12px;font-size:.85em;font-weight:600;transition:background .2s}
+    .follow-btn:hover{text-decoration:none;background:var(--primary-hover)}
+    h1{font-size:1.8em;margin:10px 0;text-align:center}
+    .filters{display:flex;gap:12px;margin:16px 0;flex-wrap:wrap;justify-content:center}
+    .filter-btn{padding:10px 20px;font-size:1em;background:#333;color:var(--text-secondary);border:1px solid #444;border-radius:30px;cursor:pointer;transition:all .2s}
+    .filter-btn.active{background:var(--primary);color:white;border-color:var(--primary)}
+    .status-bar{font-size:.85em;color:var(--text-muted);margin-top:4px;text-align:center;min-height:1.4em}
+    .countdown{font-weight:bold;color:var(--success)}
+    .movie-card{background:var(--card-bg);max-width:600px;width:100%;padding:20px;border-radius:var(--radius);box-shadow:var(--shadow);text-align:center;margin-top:16px;opacity:0;transform:translateY(10px);transition:opacity .4s ease,transform .4s ease}
+    .movie-card.visible{opacity:1;transform:translateY(0)}
+    .movie-poster{max-width:100%;border-radius:var(--radius);display:block;margin:0 auto 16px;aspect-ratio:2/3;object-fit:cover;background:#333}
+    .movie-title{font-size:1.6em;margin:12px 0;font-weight:600}
+    .movie-overview{font-size:1em;line-height:1.6;color:var(--text-secondary)}
+    button.action-btn{padding:12px 24px;font-size:1em;margin-top:20px;background:var(--primary);color:white;border:none;border-radius:30px;cursor:pointer;font-weight:600;transition:background .2s,transform .1s;box-shadow:0 4px 12px rgba(229,9,20,.3)}
+    button.action-btn:hover:not(:disabled){background:var(--primary-hover);transform:scale(1.03)}
+    button.action-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .loading{font-size:1.3em;margin-top:30px;color:var(--text-secondary);display:none}
+    .error{color:#ff6b6b;padding:16px;background:rgba(255,107,107,.1);border-radius:var(--radius);margin-top:20px}
+    .promo-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--promo);color:white;padding:12px 20px;border-radius:30px;box-shadow:0 4px 12px rgba(0,0,0,.3);font-weight:600;text-align:center;z-index:1000;max-width:90%;opacity:0;transition:opacity .4s ease}
+    .promo-banner.show{opacity:1}
+    .promo-banner a{color:white;text-decoration:underline}
+    .watermark{position:fixed;bottom:10px;right:10px;color:rgba(255,255,255,.3);font-size:.8em;pointer-events:none;z-index:999}
+    @media(max-width:600px){#onboarding{padding:24px 16px}.filter-btn{padding:8px 16px;font-size:.9em}.movie-title{font-size:1.4em}h1{font-size:1.5em}.action-btn{padding:10px 20px;font-size:.95em}.top-bar{top:12px;left:12px}.logo-small{width:28px;height:28px}.promo-banner{padding:10px 16px;font-size:.9em}}
+    @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
   </style>
 </head>
 <body>
-  <!-- Onboarding Screen -->
-  <div id="onboarding">
-    <h2>🎬 Bienvenido a TV+</h2>
-    <p>TV+ es una plataforma que te sugiere <strong>películas en estreno</strong> o <strong>series en emisión</strong> de forma aleatoria y actualizada.</p>
-    <p>Para funcionar correctamente, necesitamos los siguientes permisos:</p>
-    <ul class="permissions-list">
-      <li>🔔 <strong>Notificaciones</strong> – Para avisarte de nuevas recomendaciones.</li>
-      <li>💾 <strong>Almacenamiento</strong> – Para guardar temporalmente datos y mejorar la velocidad.</li>
-      <li>📍 <strong>Ubicación</strong> – Para ofrecerte contenido relevante según tu región.</li>
+  <div id="onboarding" role="dialog" aria-labelledby="onboarding-title" aria-describedby="onboarding-desc">
+    <h2 id="onboarding-title">🎬 Bienvenido a TV+</h2>
+    <p id="onboarding-desc">TV+ es una plataforma que te sugiere <strong>películas en estreno</strong> o <strong>series en emisión</strong> de forma aleatoria y actualizada.</p>
+    <p>Disfruta de recomendaciones sin necesidad de permisos invasivos. Solo necesitas conexión a internet.</p>
+    <ul class="permissions-list" role="list">
+      <li role="listitem"><strong>✅️</strong> Sencillo</li>
+      <li role="listitem"><strong>✅️</strong> Rápido</li>
+      <li role="listitem"><strong>✅️</strong> Gratis</li>
+      <li role="listitem"><strong>✅️</strong> Actualizado</li>
+      <li role="listitem"><strong>✅️</strong> Con anuncios</li>
     </ul>
-    <button id="accept-btn">Aceptar y continuar</button>
+    <button id="accept-btn" aria-label="Aceptar y comenzar a usar TV+">Empezar</button>
   </div>
-
-  <!-- Main App (hidden until permissions granted) -->
-  <div id="main-app">
-    <div class="top-bar">
-      <img src="TV.png" alt="Logo" class="logo-small">
-      <a href="https://whatsapp.com/channel/0029Vb6sN8kL7UVSCeAQgA2f" target="_blank" rel="noopener noreferrer" class="follow-btn">Seguir</a>
+  <div id="main-app" role="main" aria-live="polite">
+    <div class="top-bar" role="banner">
+      <img src="TV.png" alt="Logo de TV+" class="logo-small" loading="lazy">
+      <a href="https://whatsapp.com/channel/0029Vb6sN8kL7UVSCeAQgA2f" target="_blank" rel="noopener noreferrer nofollow" class="follow-btn" aria-label="Seguir canal de TV+ en WhatsApp">Seguir</a>
     </div>
-
     <h1>TV+</h1>
-
-    <div class="filters">
-      <button class="filter-btn active" data-type="movie">Películas (en estreno)</button>
-      <button class="filter-btn" data-type="tv">Series (en emisión)</button>
+    <div class="filters" role="radiogroup" aria-label="Filtrar contenido por tipo">
+      <button class="filter-btn active" data-type="movie" role="radio" aria-checked="true">Películas (en estreno)</button>
+      <button class="filter-btn" data-type="tv" role="radio" aria-checked="false">Series (en emisión)</button>
     </div>
-
-    <div class="status-bar" aria-live="polite">
-      <span id="last-update"></span> • Próxima actualización: <span id="countdown" class="countdown">--:--</span>
+    <div class="status-bar" id="status-bar">
+      <span id="last-update" aria-label="Hora de la última actualización"></span> • Próxima actualización: <span id="countdown" class="countdown" aria-label="Tiempo restante para la próxima actualización">--:--</span>
     </div>
-
-    <button id="load-btn" class="action-btn">¿QUÉ VER? +</button>
-
-    <div id="loading" class="loading">Cargando...</div>
-    <div id="movie-container" class="movie-card"></div>
-
-    <div id="notification-fallback" class="notification-fallback"></div>
-    <div class="watermark">TV+</div>
+    <button id="load-btn" class="action-btn" aria-label="Cargar una nueva recomendación">¿QUÉ VER? +</button>
+    <div id="loading" class="loading" role="status" aria-live="polite">Cargando...</div>
+    <div id="movie-container" class="movie-card" role="region" aria-label="Contenido recomendado"></div>
+    <div id="promo-banner" class="promo-banner" role="alert" aria-live="assertive">
+      ¿Buscas algo más? ¡Descubre <a href="https://koowexa.github.io/kooprome/" target="_blank" rel="noopener noreferrer nofollow">ExoBazar</a>!
+    </div>
+    <div class="watermark" aria-hidden="true">TV+</div>
   </div>
-
   <script>
-    // === CONFIGURACIÓN CORREGIDA (sin espacios al final) ===
-    const CONFIG = {
-      API_KEY: '487ec2ee423ac20f42f80d2ee5aebab8',
-      BASE_URL: 'https://api.themoviedb.org/3',
-      IMG_BASE_URL: 'https://image.tmdb.org/t/p/w500',
-      MAX_RETRIES: 3,
-      INITIAL_DELAY: 1000,
-      AUTO_UPDATE_INTERVAL: 5 * 60 * 1000,
-    };
-
-    // === ESTADO GLOBAL ===
-    const State = {
-      currentType: 'movie',
-      currentAbortController: null,
-      autoUpdateTimer: null,
-      lastUpdate: null,
-      isPageVisible: true,
-      isLoading: false,
-      lastItem: null,
-      cache: { movie: [], tv: [] },
-      cacheExpiry: { movie: 0, tv: 0 },
-    };
-
-    // === FUNCIONES AUXILIARES ===
-    function cleanup() {
-      if (State.currentAbortController) {
-        State.currentAbortController.abort();
-        State.currentAbortController = null;
-      }
-      if (State.autoUpdateTimer) {
-        clearTimeout(State.autoUpdateTimer);
-        State.autoUpdateTimer = null;
-      }
-    }
-
-    function formatTime(date) {
-      return new Intl.DateTimeFormat('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(date);
-    }
-
-    function showFallbackNotification(message) {
-      const el = document.getElementById('notification-fallback');
-      el.textContent = message;
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 5000);
-    }
-
-    async function requestNotificationPermission() {
-      if (!("Notification" in window)) throw new Error("Notificaciones no soportadas");
-      if (Notification.permission === "granted") return true;
-      if (Notification.permission === "denied") throw new Error("Permiso de notificaciones denegado");
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") throw new Error("Permiso de notificaciones denegado");
-      return true;
-    }
-
-    async function requestLocationPermission() {
-      if (!navigator.geolocation) throw new Error("Geolocalización no soportada");
-      return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve(pos),
-          (err) => {
-            console.warn("Error de ubicación:", err);
-            // Aunque no la usemos, exigimos que no se bloquee
-            if (err.code === 1) reject(new Error("Acceso a ubicación denegado"));
-            else resolve(); // permitimos continuar si es otro error
-          },
-          { timeout: 10000 }
-        );
-      });
-    }
-
-    function testStorage() {
-      try {
-        localStorage.setItem('tvplus_test', 'ok');
-        localStorage.removeItem('tvplus_test');
-        return true;
-      } catch (e) {
-        throw new Error("No se puede usar almacenamiento local");
-      }
-    }
-
-    async function requestAllPermissions() {
-      try {
-        await requestNotificationPermission();
-        testStorage();
-        await requestLocationPermission();
-        return true;
-      } catch (err) {
-        alert("❌ Permiso necesario: " + err.message + "\n\nPor favor, acepta todos los permisos para usar TV+.");
-        return false;
-      }
-    }
-
-    // === ONBOARDING ===
-    document.getElementById('accept-btn').addEventListener('click', async () => {
-      const granted = await requestAllPermissions();
-      if (granted) {
-        document.getElementById('onboarding').style.display = 'none';
-        document.getElementById('main-app').style.display = 'block';
-        initApp();
-      }
-    });
-
-    // === FUNCIÓN PRINCIPAL DE LA APP ===
-    function initApp() {
-      // Reutilizamos tu lógica original (corregida)
-      function updateCountdown() {
-        if (!State.lastUpdate) {
-          document.getElementById('countdown').textContent = '--:--';
-          return;
-        }
-        const next = new Date(State.lastUpdate.getTime() + CONFIG.AUTO_UPDATE_INTERVAL);
-        const now = new Date();
-        if (next <= now) {
-          document.getElementById('countdown').textContent = '--:--';
-          return;
-        }
-        const diff = next - now;
-        const mins = Math.floor(diff / 60000);
-        const secs = Math.floor((diff % 60000) / 1000);
-        document.getElementById('countdown').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        setTimeout(updateCountdown, 1000);
-      }
-
-      async function fetchWithRetry(url, retries = CONFIG.MAX_RETRIES, delay = CONFIG.INITIAL_DELAY) {
-        for (let i = 0; i <= retries; i++) {
-          try {
-            const res = await fetch(url, {
-              signal: State.currentAbortController?.signal,
-              headers: { Accept: 'application/json' }
-            });
-            if (!res.ok) {
-              if (res.status === 429 && i < retries) {
-                await new Promise(r => setTimeout(r, delay * (2 ** i)));
-                continue;
-              }
-              throw new Error(`HTTP ${res.status}`);
-            }
-            return await res.json();
-          } catch (err) {
-            if (err.name === 'AbortError') throw err;
-            if (i === retries) throw err;
-            await new Promise(r => setTimeout(r, delay * (2 ** i)));
-          }
-        }
-      }
-
-      async function fetchMoviesNowPlaying() {
-        const now = Date.now();
-        if (State.cache.movie.length > 0 && now < State.cacheExpiry.movie) {
-          return State.cache.movie;
-        }
-        const data = await fetchWithRetry(
-          `${CONFIG.BASE_URL}/movie/now_playing?api_key=${CONFIG.API_KEY}&language=es-ES&region=ES`
-        );
-        const valid = (data.results || []).filter(m =>
-          m.poster_path && m.title && m.release_date
-        );
-        State.cache.movie = valid;
-        State.cacheExpiry.movie = now + 15 * 60 * 1000;
-        return valid;
-      }
-
-      async function fetchTVOnTheAir() {
-        const now = Date.now();
-        if (State.cache.tv.length > 0 && now < State.cacheExpiry.tv) {
-          return State.cache.tv;
-        }
-        const data = await fetchWithRetry(
-          `${CONFIG.BASE_URL}/tv/on_the_air?api_key=${CONFIG.API_KEY}&language=es-ES`
-        );
-        const valid = (data.results || []).filter(s => s.poster_path && s.name);
-        State.cache.tv = valid;
-        State.cacheExpiry.tv = now + 15 * 60 * 1000;
-        return valid;
-      }
-
-      async function getRandomContent(type) {
-        let items = [];
-        if (type === 'movie') {
-          items = await fetchMoviesNowPlaying();
-        } else if (type === 'tv') {
-          items = await fetchTVOnTheAir();
-        }
-        if (items.length === 0) {
-          throw new Error(
-            type === 'movie'
-              ? 'No hay películas en estreno actualmente.'
-              : 'No hay series en emisión actualmente.'
-          );
-        }
-        return items[Math.floor(Math.random() * items.length)];
-      }
-
-      function renderContent(item, type) {
-        const container = document.getElementById('movie-container');
-        container.innerHTML = '';
-
-        const img = document.createElement('img');
-        img.className = 'movie-poster';
-        img.src = `${CONFIG.IMG_BASE_URL}${item.poster_path}`;
-        img.alt = type === 'movie' ? `Póster de ${item.title}` : `Póster de ${item.name}`;
-        img.loading = 'lazy';
-        img.onerror = () => {
-          img.src = 'https://via.placeholder.com/300x450?text=Sin+imagen';
-          img.alt = 'Imagen no disponible';
-        };
-
-        const title = document.createElement('div');
-        title.className = 'movie-title';
-        const name = type === 'movie' ? item.title : item.name;
-        const year = type === 'movie'
-          ? (item.release_date ? item.release_date.substring(0, 4) : 'N/A')
-          : (item.first_air_date ? item.first_air_date.substring(0, 4) : 'N/A');
-        title.textContent = `${name} (${year})`;
-
-        const overview = document.createElement('p');
-        overview.className = 'movie-overview';
-        overview.textContent = item.overview?.trim() || 'Sin descripción disponible.';
-
-        container.appendChild(img);
-        container.appendChild(title);
-        container.appendChild(overview);
-        container.classList.add('visible');
-
-        State.lastItem = { item, type };
-      }
-
-      function renderError(message) {
-        const container = document.getElementById('movie-container');
-        container.innerHTML = '';
-        const err = document.createElement('div');
-        err.className = 'error';
-        err.textContent = `❌ ${message}`;
-        container.appendChild(err);
-        container.classList.add('visible');
-      }
-
-      async function loadContent(isAuto = false) {
-        if (!State.isPageVisible && isAuto) return;
-        if (State.isLoading) return;
-
-        State.isLoading = true;
-        cleanup();
-        State.currentAbortController = new AbortController();
-
-        const btn = document.getElementById('load-btn');
-        const loading = document.getElementById('loading');
-        const container = document.getElementById('movie-container');
-
-        btn.disabled = true;
-        loading.style.display = 'block';
-        container.classList.remove('visible');
-
-        try {
-          const item = await getRandomContent(State.currentType);
-          renderContent(item, State.currentType);
-
-          State.lastUpdate = new Date();
-          document.getElementById('last-update').textContent = `Última: ${formatTime(State.lastUpdate)}`;
-          updateCountdown();
-
-          if (isAuto && State.lastItem) {
-            const isNew = !State.lastItem ||
-              State.lastItem.type !== State.currentType ||
-              State.lastItem.item.id !== item.id;
-            if (isNew) {
-              const title = State.currentType === 'movie' ? 'Nueva película en estreno' : 'Nueva serie en emisión';
-              const body = `"${State.currentType === 'movie' ? item.title : item.name}"`;
-              if (Notification.permission === "granted") {
-                new Notification(`🎬 ${title}`, {
-                  body,
-                  icon: 'https://www.themoviedb.org/assets/2/apple-touch-icon-cfba7699efe7a742de25c28e08c38525f19381d31087c69e89d6bcb8e3c0ddfa.png'
-                });
-              } else {
-                showFallbackNotification(body);
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error al cargar contenido:', error);
-          if (State.lastItem && !isAuto) {
-            renderContent(State.lastItem.item, State.lastItem.type);
-          } else {
-            renderError(error.message || 'No se pudo cargar contenido. Inténtalo más tarde.');
-          }
-        } finally {
-          loading.style.display = 'none';
-          btn.disabled = false;
-          State.isLoading = false;
-          if (isAuto) scheduleAutoUpdate();
-        }
-      }
-
-      function scheduleAutoUpdate() {
-        cleanup();
-        State.autoUpdateTimer = setTimeout(() => loadContent(true), CONFIG.AUTO_UPDATE_INTERVAL);
-        updateCountdown();
-      }
-
-      let visibilityDebounce = null;
-      document.addEventListener('visibilitychange', () => {
-        State.isPageVisible = !document.hidden;
-        if (visibilityDebounce) clearTimeout(visibilityDebounce);
-        if (State.isPageVisible && State.lastUpdate) {
-          visibilityDebounce = setTimeout(() => {
-            const elapsed = Date.now() - State.lastUpdate.getTime();
-            const remaining = Math.max(0, CONFIG.AUTO_UPDATE_INTERVAL - elapsed);
-            if (!State.autoUpdateTimer) {
-              State.autoUpdateTimer = setTimeout(() => loadContent(true), remaining);
-            }
-          }, 300);
-        }
-      });
-
-      // Event listeners
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (btn.classList.contains('active')) return;
-          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          State.currentType = btn.dataset.type;
-          loadContent(false);
-        });
-      });
-
-      document.getElementById('load-btn').addEventListener('click', () => loadContent(false));
-      loadContent(false);
-      updateCountdown();
-
-      window.addEventListener('beforeunload', cleanup);
-    }
+    const CONFIG={API_KEY:'487ec2ee423ac20f42f80d2ee5aebab8',BASE_URL:'https://api.themoviedb.org/3',IMG_BASE_URL:'https://image.tmdb.org/t/p/w500',MAX_RETRIES:3,INITIAL_DELAY:1000,AUTO_UPDATE_INTERVAL:5*60*1000};
+    const State={currentType:'movie',currentAbortController:null,autoUpdateTimer:null,lastUpdate:null,isPageVisible:true,isLoading:false,lastItem:null,cache:{movie:[],tv:[]},cacheExpiry:{movie:0,tv:0},interactionCount:0};
+    function cleanup(){if(State.currentAbortController){State.currentAbortController.abort();State.currentAbortController=null}if(State.autoUpdateTimer){clearTimeout(State.autoUpdateTimer);State.autoUpdateTimer=null}}
+    function formatTime(date){return new Intl.DateTimeFormat('es-ES',{hour:'2-digit',minute:'2-digit'}).format(date)}
+    function maybeShowPromo(){State.interactionCount++;if(State.interactionCount>=3||(State.lastUpdate&&Date.now()-State.lastUpdate.getTime()>2*60*1000)){const promo=document.getElementById('promo-banner');if(!promo.classList.contains('show')){promo.classList.add('show');setTimeout(()=>{promo.classList.remove('show')},8000)}}}
+    async function fetchWithRetry(url,retries=CONFIG.MAX_RETRIES,delay=CONFIG.INITIAL_DELAY){for(let i=0;i<=retries;i++){try{const res=await fetch(url,{signal:State.currentAbortController?.signal,headers:{Accept:'application/json'}});if(!res.ok){if(res.status===429&&i<retries){await new Promise(r=>setTimeout(r,delay*(2**i)));continue}throw new Error(`HTTP ${res.status}`)}return await res.json()}catch(err){if(err.name==='AbortError')throw err;if(i===retries)throw err;await new Promise(r=>setTimeout(r,delay*(2**i)))}}}
+    async function fetchMoviesNowPlaying(){const now=Date.now();if(State.cache.movie.length>0&&now<State.cacheExpiry.movie){return State.cache.movie}const data=await fetchWithRetry(`${CONFIG.BASE_URL}/movie/now_playing?api_key=${CONFIG.API_KEY}&language=es-ES&region=ES`);const valid=(data.results||[]).filter(m=>m.poster_path&&m.title&&m.release_date);State.cache.movie=valid;State.cacheExpiry.movie=now+15*60*1000;return valid}
+    async function fetchTVOnTheAir(){const now=Date.now();if(State.cache.tv.length>0&&now<State.cacheExpiry.tv){return State.cache.tv}const data=await fetchWithRetry(`${CONFIG.BASE_URL}/tv/on_the_air?api_key=${CONFIG.API_KEY}&language=es-ES`);const valid=(data.results||[]).filter(s=>s.poster_path&&s.name);State.cache.tv=valid;State.cacheExpiry.tv=now+15*60*1000;return valid}
+    async function getRandomContent(type){let items=[];if(type==='movie'){items=await fetchMoviesNowPlaying()}else if(type==='tv'){items=await fetchTVOnTheAir()}if(items.length===0){throw new Error(type==='movie'?'No hay películas en estreno actualmente.':'No hay series en emisión actualmente.')}return items[Math.floor(Math.random()*items.length)]}
+    function renderContent(item,type){const container=document.getElementById('movie-container');container.innerHTML='';const img=document.createElement('img');img.className='movie-poster';img.src=`${CONFIG.IMG_BASE_URL}${item.poster_path}`;img.alt=type==='movie'?`Póster de ${item.title}`:`Póster de ${item.name}`;img.loading='lazy';img.onerror=()=>{img.src='https://via.placeholder.com/300x450?text=Sin+imagen';img.alt='Imagen no disponible'};const title=document.createElement('div');title.className='movie-title';const name=type==='movie'?item.title:item.name;const year=type==='movie'?(item.release_date?item.release_date.substring(0,4):'N/A'):(item.first_air_date?item.first_air_date.substring(0,4):'N/A');title.textContent=`${name} (${year})`;const overview=document.createElement('p');overview.className='movie-overview';overview.textContent=item.overview?.trim()||'Sin descripción disponible.';container.appendChild(img);container.appendChild(title);container.appendChild(overview);container.classList.add('visible');State.lastItem={item,type}}
+    function renderError(message){const container=document.getElementById('movie-container');container.innerHTML='';const err=document.createElement('div');err.className='error';err.textContent=`❌ ${message}`;container.appendChild(err);container.classList.add('visible')}
+    async function loadContent(isAuto=false){if(!State.isPageVisible&&isAuto)return;if(State.isLoading)return;State.isLoading=true;cleanup();State.currentAbortController=new AbortController();const btn=document.getElementById('load-btn');const loading=document.getElementById('loading');const container=document.getElementById('movie-container');btn.disabled=true;loading.style.display='block';container.classList.remove('visible');try{const item=await getRandomContent(State.currentType);renderContent(item,State.currentType);State.lastUpdate=new Date();document.getElementById('last-update').textContent=`Última: ${formatTime(State.lastUpdate)}`;updateCountdown();if(!isAuto)maybeShowPromo()}catch(error){console.error('Error al cargar contenido:',error);if(State.lastItem&&!isAuto){renderContent(State.lastItem.item,State.lastItem.type)}else{renderError(error.message||'No se pudo cargar contenido. Inténtalo más tarde.')}}finally{loading.style.display='none';btn.disabled=false;State.isLoading=false;if(isAuto)scheduleAutoUpdate()}}
+    function updateCountdown(){if(!State.lastUpdate){document.getElementById('countdown').textContent='--:--';return}const next=new Date(State.lastUpdate.getTime()+CONFIG.AUTO_UPDATE_INTERVAL);const now=new Date();if(next<=now){document.getElementById('countdown').textContent='--:--';return}const diff=next-now;const mins=Math.floor(diff/60000);const secs=Math.floor((diff%60000)/1000);document.getElementById('countdown').textContent=`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;setTimeout(updateCountdown,1000)}
+    function scheduleAutoUpdate(){cleanup();State.autoUpdateTimer=setTimeout(()=>loadContent(true),CONFIG.AUTO_UPDATE_INTERVAL);updateCountdown()}
+    document.getElementById('accept-btn').addEventListener('click',()=>{document.getElementById('onboarding').style.display='none';document.getElementById('main-app').style.display='block';initApp()});
+    function initApp(){let visibilityDebounce=null;document.addEventListener('visibilitychange',()=>{State.isPageVisible=!document.hidden;if(visibilityDebounce)clearTimeout(visibilityDebounce);if(State.isPageVisible&&State.lastUpdate){visibilityDebounce=setTimeout(()=>{const elapsed=Date.now()-State.lastUpdate.getTime();const remaining=Math.max(0,CONFIG.AUTO_UPDATE_INTERVAL-elapsed);if(!State.autoUpdateTimer){State.autoUpdateTimer=setTimeout(()=>loadContent(true),remaining)}},300)}});document.querySelectorAll('.filter-btn').forEach(btn=>{btn.addEventListener('click',()=>{if(btn.classList.contains('active'))return;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');State.currentType=btn.dataset.type;loadContent(false)})});document.getElementById('load-btn').addEventListener('click',()=>loadContent(false));loadContent(false);updateCountdown();window.addEventListener('beforeunload',cleanup)}
   </script>
 </body>
 </html>
