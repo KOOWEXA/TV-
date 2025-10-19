@@ -20,12 +20,4 @@ TV+ es una plataforma web ligera y gratuita que te ofrece recomendaciones aleato
 3. Haz clic en el botón **¿QUÉ VER? +** para obtener una recomendación aleatoria.
 4. ¡Disfruta de tu próxima película o serie!
 
-## Notas
-
-- La plataforma incluye anuncios para mantenerse operativa.
-- Se recomienda una conexión a internet estable para cargar las imágenes y descripciones.
-- TV+ no almacena datos personales ni realiza seguimiento de usuarios.
-
 ---
-
-¿Te gustó? ¡Compártelo con alguien que nunca sabe qué ver!
