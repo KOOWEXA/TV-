@@ -53,18 +53,32 @@
       max-width: 500px;
     }
 
-    /* Onboarding */
+    /* Onboarding Fullscreen */
     #onboarding {
-      background: var(--card-bg);
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       padding: 24px;
-      border-radius: var(--radius);
+      z-index: 2000;
       text-align: center;
-      margin-bottom: 24px;
+    }
+
+    #onboarding .content {
+      background: var(--card-bg);
+      padding: 32px;
+      border-radius: var(--radius);
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
 
     #onboarding h2 {
-      font-size: 1.5em;
-      margin-bottom: 12px;
+      font-size: 1.6em;
+      margin-bottom: 16px;
     }
 
     #onboarding p {
@@ -261,6 +275,40 @@
       margin: 16px 0;
     }
 
+    /* Botón de descarga */
+    .download-btn {
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+      width: 100%;
+    }
+
+    .download-btn a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #222;
+      color: var(--text);
+      text-decoration: none;
+      padding: 10px 16px;
+      border-radius: 30px;
+      font-size: 0.9em;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .download-btn a:hover,
+    .download-btn a:focus {
+      background: #333;
+      outline: 2px solid white;
+      outline-offset: 2px;
+    }
+
+    .download-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
     /* Promo Banner */
     #promo-banner {
       position: fixed;
@@ -291,9 +339,10 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <div id="onboarding" role="dialog" aria-labelledby="onboarding-title" aria-describedby="onboarding-desc">
-      <h2 id="onboarding-title">🎬 Bienvenido a TV+</h2>
+  <!-- Onboarding Fullscreen -->
+  <div id="onboarding" role="dialog" aria-labelledby="onboarding-title" aria-describedby="onboarding-desc">
+    <div class="content">
+      <h2 id="onboarding-title">📺 Bienvenido</h2>
       <p id="onboarding-desc">TV+ te sugiere <strong>películas y series</strong> de forma aleatoria: estrenos, populares, próximos y más.</p>
       <p>Sin registro. Solo necesitas conexión a internet.</p>
       <ul class="permissions-list" role="list">
@@ -305,14 +354,17 @@
       </ul>
       <button id="accept-btn" aria-label="Aceptar y comenzar a usar TV+">Empezar</button>
     </div>
+  </div>
 
+  <!-- Main App -->
+  <div class="container">
     <div id="main-app" role="main" aria-live="polite">
       <div class="top-bar" role="banner">
         <img src="https://github.com/KOOWEXA/TV-/raw/refs/heads/main/TV.png" alt="TV+" class="logo-small" loading="lazy" />
         <a href="https://whatsapp.com/channel/0029Vb6sN8kL7UVSCeAQgA2f" target="_blank" rel="noopener noreferrer nofollow" class="follow-btn" aria-label="Seguir canal de TV+ en WhatsApp">Seguir</a>
       </div>
 
-      <h1>TV+</h1>
+      <h1>📺TV+</h1>
 
       <div class="filters" role="radiogroup" aria-label="Filtrar contenido por tipo">
         <button class="filter-btn active" data-type="now_playing" role="radio" aria-checked="true">En cines</button>
@@ -331,6 +383,20 @@
       <div id="loading" class="loading" role="status">Cargando...</div>
 
       <div id="movie-container" class="movie-card" role="region" aria-label="Contenido recomendado"></div>
+
+      <!-- Botón de descarga -->
+      <div class="download-btn">
+        <a href="https://github.com/KOOWEXA/TV-/raw/refs/heads/main/TV+.apk"
+           download="TV+.apk"
+           target="_blank"
+           rel="noopener noreferrer nofollow"
+           aria-label="Descargar la app TV+ para Android">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 16L8 12h3V8h2v4h3l-4 4zm-6 4h12v2H6v-2z"/>
+          </svg>
+          Descargar app
+        </a>
+      </div>
     </div>
   </div>
 
@@ -359,7 +425,7 @@
       lastItem: null,
       cache: {},
       cacheExpiry: {},
-      contentSignatures: {} // Para detectar novedades
+      contentSignatures: {}
     };
 
     function cleanup() {
@@ -464,14 +530,12 @@
       const valid = rawData.filter(item => item.poster_path && (item.title || item.name));
       const newSignature = generateSignature(valid);
 
-      // Si hay caché válido PERO la firma cambió → hay novedades → forzar actualización
       if (cacheValid && State.contentSignatures[type] !== newSignature) {
         console.log(`🔍 Novedades detectadas en "${type}". Actualizando caché.`);
       } else if (cacheValid) {
-        return State.cache[type]; // usar caché existente
+        return State.cache[type];
       }
 
-      // Guardar nuevo caché
       State.cache[type] = valid;
       State.cacheExpiry[type] = now + 15 * 60 * 1000;
       State.contentSignatures[type] = newSignature;
@@ -585,7 +649,6 @@
       updateCountdown();
     }
 
-    // Inicialización
     document.getElementById('accept-btn').addEventListener('click', () => {
       document.getElementById('onboarding').style.display = 'none';
       document.getElementById('main-app').style.display = 'block';
